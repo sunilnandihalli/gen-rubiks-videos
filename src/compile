@@ -1,0 +1,3 @@
+#!/bin/bash -vx
+g++ -ggdb3 glad.c triangle.cpp -o triangle -I ../include -lglfw -ldl
+

@@ -1,0 +1,8 @@
+#!/bin/bash 
+for i in ncube_renderer.h main.cpp ncube_renderer.cc Cube.cpp Cube.h main.cpp ;
+do
+    echo $i;
+    clang-format $i > $i.formatted
+    mv $i $i.old
+    mv $i.formatted $i
+done;
