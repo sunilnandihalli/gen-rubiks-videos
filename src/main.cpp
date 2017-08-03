@@ -1,6 +1,6 @@
 
-#include "rubutils.h"
 #include "ncube_renderer.h"
+#include "rubutils.h"
 
 #include "Cube.h"
 #include <GLFW/glfw3.h>
@@ -46,15 +46,15 @@ int main() {
   setup(c, width, height, program_id, vao, vbo);
   int numRenders = 0;
   // render loop
-  while (!glfwWindowShouldClose(window) && numRenders<10000000) {
+  while (!glfwWindowShouldClose(window) && numRenders < 10000000) {
     // input
     // -----
     processInput(window);
 
     // render
     // ------
-    render(c,width,height,program_id,vao,vbo);
-    numRenders+=1;
+    render(c, width, height, program_id, vao, vbo);
+    numRenders += 1;
     glfwSwapBuffers(window);
     glfwPollEvents();
   }

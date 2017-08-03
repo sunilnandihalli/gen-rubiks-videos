@@ -9,28 +9,29 @@
 #include <iomanip>
 #include <iostream>
 #include <map>
+#include <mutex>
 #include <set>
+#include <thread>
 #include <tuple>
 #include <vector>
-#include <thread>
-#include <mutex>
 
 //#define GLM_GTC_matrix_transform
 #include <glm/gtc/matrix_transform.hpp>
 // glm::translate, glm::rotate, glm::scale, glm::perspective
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
-static float piby2 = 3.14159265358979323846/2;
+static float piby2 = 3.14159265358979323846 / 2;
 
 enum CARTSIDE : uint8_t { PZ, PY, NX, NZ, NY, PX, NONE };
 enum SIDE : uint8_t { FRONT, TOP, LEFT, BACK, BOTTOM, RIGHT, INVALIDSIDE };
-const std::vector<const char*> SIDEstr({"front", "top", "left", "back",
-                                        "bottom", "right"});
+const std::vector<const char *> SIDEstr({"front", "top", "left", "back",
+                                         "bottom", "right"});
 
-const glm::vec3 dir[6] = {glm::vec3(0,0,1), glm::vec3(0,1,0), glm::vec3(-1,0,0),
-			  glm::vec3(0,0,-1),glm::vec3(0,-1,0), glm::vec3(1,0,0)};
+const glm::vec3 dir[6] = {glm::vec3(0, 0, 1),  glm::vec3(0, 1, 0),
+                          glm::vec3(-1, 0, 0), glm::vec3(0, 0, -1),
+                          glm::vec3(0, -1, 0), glm::vec3(1, 0, 0)};
 enum DIR { CW, CCW };
-const std::vector<const char*> DIRstr({"CW","CCW"});
+const std::vector<const char *> DIRstr({"CW", "CCW"});
 enum COLOR { RED, WHITE, GREEN, ORANGE, YELLOW, BLUE };
 const uint8_t OrdersCCW[6][4] = {
     {TOP, LEFT, BOTTOM, RIGHT}, {FRONT, RIGHT, BACK, LEFT},
@@ -63,7 +64,7 @@ const int totalFields = numOneDimFields + numTwoDimFields + numThreeDimFields;
 DIR opp(int side);
 
 class Cube {
- public:
+public:
   static int piece[totalFields];
   static uint8_t mp[6][2][6];
   /* We can't explore the transition from all possible orientations to this
@@ -88,16 +89,17 @@ class Cube {
   glm::vec3 curCubeTranslation;
   glm::quat curCubeRotQuaternion;
   double curAngle;
-  
+
   int width, height;
   int pos[totalFields];
   uint8_t renderingData[78];
   void genRenderingData();
   Cube();
-  bool operator==(const Cube& c) const;
-  static void rotate(Cube& c, SIDE side, DIR dir);
+  bool operator==(const Cube &c) const;
+  static void rotate(Cube &c, SIDE side, DIR dir);
   static void init();
-  std::thread* animate(int n=10,int durationSecs=20,int minTimeSecsPerTurn=2,int fps=60);
+  std::thread *animate(int n = 10, int durationSecs = 20,
+                       int minTimeSecsPerTurn = 2, int fps = 60);
   glm::mat4 viewport(int vl, int vb, int vr, int vt);
 };
-#endif  
+#endif

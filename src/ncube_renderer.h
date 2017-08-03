@@ -12,10 +12,14 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <sstream>
 
-void setUniformData(GLuint program_id, const char *name, int size, const int *data) ;
-void setUniformMatrix(GLuint program_id, const char *name, const glm::mat4 &m) ;
-void setUniformMatrix(GLuint program_id, const char *name, int count, const glm::mat4 m[]) ;
-void setup(Cube& c, int width, int height, GLuint& program_id, GLuint& vao, GLuint& vbo) ;
+void setUniformData(GLuint program_id, const char *name, int size,
+                    const int *data);
+void setUniformMatrix(GLuint program_id, const char *name, const glm::mat4 &m);
+void setUniformMatrix(GLuint program_id, const char *name, int count,
+                      const glm::mat4 m[]);
+void setup(Cube &c, int width, int height, GLuint &program_id, GLuint &vao,
+           GLuint &vbo);
 void setVertexAttrib(const char *attribName, GLvoid *ptr);
-void render(Cube& c, int width,int height, GLuint program_id, GLuint vao, GLuint vbo) ;
-#endif  
+void render(Cube &c, int width, int height, GLuint program_id, GLuint vao,
+            GLuint vbo);
+#endif

@@ -1,10 +1,10 @@
 #include "Cube.h"
 #include <bitset>
+#include <chrono>
 #include <cmath>
 #include <map>
 #include <set>
 #include <thread>
-#include <chrono>
 
 uint8_t Cube::mp[6][2][6];
 int Cube::piece[54];
@@ -60,7 +60,7 @@ void Cube::init() {
   setupTranslateMats();
 }
 
-void Cube::rotate(Cube& c, SIDE s, DIR d) {
+void Cube::rotate(Cube &c, SIDE s, DIR d) {
   int cumFieldId = numOneDimFields;
   for (int i = 0; i < numTwoDimPieces; i++) {
     if (std::set<int>({c.pos[cumFieldId], c.pos[cumFieldId + 1]}).count(s) !=
@@ -81,9 +81,10 @@ void Cube::rotate(Cube& c, SIDE s, DIR d) {
   }
 }
 
-bool Cube::operator==(const Cube& c) const {
+bool Cube::operator==(const Cube &c) const {
   for (int i = 0; i < totalFields; ++i) {
-    if (pos[i] != c.pos[i]) return false;
+    if (pos[i] != c.pos[i])
+      return false;
   }
   return true;
 }
@@ -96,32 +97,34 @@ void Cube::genConfigs() {
   using std::set;
   using std::setw;
   for (int i = 0; i < 6; i++) {
-    const uint8_t* p = &(pieces1[i][0]);
+    const uint8_t *p = &(pieces1[i][0]);
     pid[set<uint8_t>(p, p + 1)] = i;
   }
   for (int i = 0; i < 12; i++) {
-    const uint8_t* p = &(pieces2[i][0]);
+    const uint8_t *p = &(pieces2[i][0]);
     pid[set<uint8_t>(p, p + 2)] = i;
   }
   for (int i = 0; i < 8; i++) {
-    const uint8_t* p = &(pieces3[i][0]);
+    const uint8_t *p = &(pieces3[i][0]);
     pid[set<uint8_t>(p, p + 3)] = i;
   }
   std::vector<uint8_t> ort = {FRONT, TOP, LEFT, BACK, BOTTOM, RIGHT};
-  std::vector<uint8_t> ops = {LEFT, FRONT, FRONT, FRONT, TOP};  // always rotate CCW
+  std::vector<uint8_t> ops = {LEFT, FRONT, FRONT, FRONT,
+                              TOP}; // always rotate CCW
   std::vector<uint8_t> frontMapped = {
-      FRONT, TOP, LEFT, BOTTOM, RIGHT, BACK};  //sequence locations of FRONT
+      FRONT, TOP, LEFT, BOTTOM, RIGHT, BACK}; // sequence locations of FRONT
   glm::mat4 m(1.0f);
   auto rot = [&m, &ort](uint8_t s, uint8_t d) {
-    for (int i = 0; i < 6; i++) ort[i] = mp[s][d][ort[i]];
-    std::vector<SIDE> cartIdTofaceId({RIGHT,TOP,FRONT});
-    std::map<SIDE,int> faceIdTocartId(
-    {{RIGHT,0},{TOP,1},{FRONT,2},
-			 {LEFT,3},{BOTTOM,4},{BACK,5}});
-    for (int coordId = 0;coordId<3;coordId++) {
+    for (int i = 0; i < 6; i++)
+      ort[i] = mp[s][d][ort[i]];
+    std::vector<SIDE> cartIdTofaceId({RIGHT, TOP, FRONT});
+    std::map<SIDE, int> faceIdTocartId(
+        {{RIGHT, 0}, {TOP, 1}, {FRONT, 2}, {LEFT, 3}, {BOTTOM, 4}, {BACK, 5}});
+    for (int coordId = 0; coordId < 3; coordId++) {
       int mappedCoordId = faceIdTocartId[SIDE(ort[cartIdTofaceId[coordId]])];
-      for(int i=0;i<3;i++) m[coordId][i] = 0;
-      m[coordId][mappedCoordId%3] = mappedCoordId>2?-1:1;      
+      for (int i = 0; i < 3; i++)
+        m[coordId][i] = 0;
+      m[coordId][mappedCoordId % 3] = mappedCoordId > 2 ? -1 : 1;
     }
   };
   const int intmax = 999999999;
@@ -159,9 +162,11 @@ void Cube::genConfigs() {
         rotMatIds[2][dimPieceId][locid] = confid;
       }
       pRotMat[confid] = m;
-      if (j != 3) rot(ort[FRONT], CCW);
+      if (j != 3)
+        rot(ort[FRONT], CCW);
     }
-    if (i != 5) rot(ops[i], CCW);
+    if (i != 5)
+      rot(ops[i], CCW);
   }
 }
 void Cube::setupTranslateMats() {
@@ -174,7 +179,8 @@ void Cube::setupTranslateMats() {
       for (auto dz : pairs({{-1.0, NZ}, {0.0, NONE}, {1.0, PZ}})) {
         set<uint8_t> p({dx.second, dy.second, dz.second});
         p.erase(NONE);
-        if (p.empty()) continue;
+        if (p.empty())
+          continue;
         int id = pid[p] + vector<int>({0, 6, 18})[p.size() - 1];
         pTransMat[id] = glm::translate(glm::mat4(1.0f),
                                        glm::vec3(dx.first, dy.first, dz.first));
@@ -186,9 +192,9 @@ void Cube::setupCurrentFrameData() {
   projection = glm::perspective(20.0f, 1.0f, 5.0f, 15.0f);
   cubeTranslation = glm::translate(glm::mat4(1.0f), curCubeTranslation);
   cubeRotation = glm::toMat4(curCubeRotQuaternion);
-  rotatingSideTrf = glm::rotate(glm::mat4(1.0f),
-				float(curAngle*(curSideRotDir==CW?-1:1)),
-				dir[curSideRotAxis]);
+  rotatingSideTrf = glm::rotate(
+      glm::mat4(1.0f), float(curAngle * (curSideRotDir == CW ? -1 : 1)),
+      dir[curSideRotAxis]);
   pScale = glm::scale(glm::mat4(1.0f), glm::vec3(0.5, 0.5, 0.5));
   genRenderingData();
 }
@@ -200,22 +206,22 @@ void Cube::genRenderingData() {
   const int intmax = 999999999;
 
   for (uint8_t i = 0; i < 6; i++, o += 3, cumFieldId += 1) {
-    uint8_t& rotid(renderingData[o]);
-    uint8_t& transid(renderingData[o + 1]);
-    uint8_t& colorMask(renderingData[o + 2]);
+    uint8_t &rotid(renderingData[o]);
+    uint8_t &transid(renderingData[o + 1]);
+    uint8_t &colorMask(renderingData[o + 2]);
     uint8_t p1(pos[cumFieldId]);
     int tmp = pid[si({p1})];
     rotid = rotMatIds[0][0][0];
     transid = tmp;
     colorMask = 1 << piece[cumFieldId];
-    if(p1==curSideRotAxis) {
-      colorMask = colorMask|(1<<6);
+    if (p1 == curSideRotAxis) {
+      colorMask = colorMask | (1 << 6);
     }
   }
   for (int i = 0; i < 12; i++, o += 3, cumFieldId += 2) {
-    uint8_t& rotid(renderingData[o]);
-    uint8_t& transid(renderingData[o + 1]);
-    uint8_t& colorMask(renderingData[o + 2]);
+    uint8_t &rotid(renderingData[o]);
+    uint8_t &transid(renderingData[o + 1]);
+    uint8_t &colorMask(renderingData[o + 2]);
     uint8_t p1(pos[cumFieldId]), p2(pos[cumFieldId + 1]);
     int tmp = pid[si({p1, p2})];
     int locid;
@@ -229,14 +235,14 @@ void Cube::genRenderingData() {
     rotid = rotMatIds[1][i][locid];
     transid = 6 + tmp;
     colorMask = 1 << piece[cumFieldId] | 1 << piece[cumFieldId + 1];
-    if(p1==curSideRotAxis || p2 == curSideRotAxis) {
-      colorMask = colorMask | (1<<6);
+    if (p1 == curSideRotAxis || p2 == curSideRotAxis) {
+      colorMask = colorMask | (1 << 6);
     }
   }
   for (int i = 0; i < 8; i++, o += 3, cumFieldId += 3) {
-    uint8_t& rotid(renderingData[o]);
-    uint8_t& transid(renderingData[o + 1]);
-    uint8_t& colorMask(renderingData[o + 2]);
+    uint8_t &rotid(renderingData[o]);
+    uint8_t &transid(renderingData[o + 1]);
+    uint8_t &colorMask(renderingData[o + 2]);
     uint8_t p1(pos[cumFieldId]), p2(pos[cumFieldId + 1]),
         p3(pos[cumFieldId + 2]);
     int tmp = pid[si({p1, p2, p3})];
@@ -254,87 +260,91 @@ void Cube::genRenderingData() {
     transid = 18 + tmp;
     colorMask = 1 << piece[cumFieldId] | 1 << piece[cumFieldId + 1] |
                 1 << piece[cumFieldId + 2];
-    if(p1==curSideRotAxis || p2 == curSideRotAxis || p3 == curSideRotAxis) {
-      colorMask = colorMask | (1<<6);
+    if (p1 == curSideRotAxis || p2 == curSideRotAxis || p3 == curSideRotAxis) {
+      colorMask = colorMask | (1 << 6);
     }
   }
 }
 
-
-static int max(int a,int b) {
-  if(a>b) return a; else return b;
+static int max(int a, int b) {
+  if (a > b)
+    return a;
+  else
+    return b;
 }
 
-std::thread* Cube::animate(int n,int durationSecs,
-		   int minTimeSecsPerTurn,int fps) {
-  n=60;
+std::thread *Cube::animate(int n, int durationSecs, int minTimeSecsPerTurn,
+                           int fps) {
+  n = 60;
   using glm::vec3;
-  std::vector<glm::vec3> positions({vec3(0,0,0),vec3(0,1,0),vec3(0,0,0)});
-  std::vector<glm::quat> quats({
-      glm::angleAxis(float(piby2*2),glm::normalize(vec3(1,1,1))),
-		glm::angleAxis(float(piby2/2),dir[0]),
-	glm::angleAxis(float(piby2/2),dir[1]),
-	glm::angleAxis(float(piby2/2),dir[2]),
-	glm::angleAxis(float(piby2/2),dir[3]),
-	glm::angleAxis(float(piby2/2),dir[4]),
-	glm::angleAxis(float(piby2/2),dir[5]),
-	glm::angleAxis(float(piby2*2),glm::normalize(vec3(1,1,1)))});
-  std::vector<std::pair<SIDE,DIR>> moves;
-  
-  int actualTotalDuration = max(durationSecs,n*minTimeSecsPerTurn);
-  int numFrames = n*fps;
-  int sleepTimeMillis = (actualTotalDuration*1000)/numFrames;
-  for(int i=0;i<n;i++)    {
-    moves.push_back(std::pair<SIDE,DIR>(SIDE(rand()%6),DIR(rand()%2)));
+  std::vector<glm::vec3> positions(
+      {vec3(0, 0, 0), vec3(0, 1, 0), vec3(0, 0, 0)});
+  std::vector<glm::quat> quats(
+      {glm::angleAxis(float(piby2 * 2), glm::normalize(vec3(1, 1, 1))),
+       glm::angleAxis(float(piby2 / 2), dir[0]),
+       glm::angleAxis(float(piby2 / 2), dir[1]),
+       glm::angleAxis(float(piby2 / 2), dir[2]),
+       glm::angleAxis(float(piby2 / 2), dir[3]),
+       glm::angleAxis(float(piby2 / 2), dir[4]),
+       glm::angleAxis(float(piby2 / 2), dir[5]),
+       glm::angleAxis(float(piby2 * 2), glm::normalize(vec3(1, 1, 1)))});
+  std::vector<std::pair<SIDE, DIR>> moves;
+
+  int actualTotalDuration = max(durationSecs, n * minTimeSecsPerTurn);
+  int numFrames = n * fps;
+  int sleepTimeMillis = (actualTotalDuration * 1000) / numFrames;
+  for (int i = 0; i < n; i++) {
+    moves.push_back(std::pair<SIDE, DIR>(SIDE(rand() % 6), DIR(rand() % 2)));
   }
-  auto f = [fps,quats,positions,numFrames,this,moves,sleepTimeMillis](Cube* c) {
-    
+  auto f = [fps, quats, positions, numFrames, this, moves,
+            sleepTimeMillis](Cube *c) {
+
     int currentPosId = -1;
     int currentQuatId = -1;
     int curMove = -1;
     int frameId = 0;
-    float dtheta = piby2/(fps-1);
+    float dtheta = piby2 / (fps - 1);
     float theta = 0.0;
-    int numFramesPerQuat = numFrames/(quats.size()-1);
-    int numFramesPerPos = numFrames/(positions.size()-1);
+    int numFramesPerQuat = numFrames / (quats.size() - 1);
+    int numFramesPerPos = numFrames / (positions.size() - 1);
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-    while(frameId<numFrames) {
+    while (frameId < numFrames) {
       {
-	std::lock_guard<std::mutex> guard(objectLock);
-    if(frameId%fps == 0) {
-      if(curMove>-1) 
-	Cube::rotate(*c,curSideRotAxis,curSideRotDir);
-        curMove++;
-	curSideRotAxis = moves[curMove].first;
-	curSideRotDir = moves[curMove].second;
-	theta = dtheta;
-      } else {
-	theta += dtheta;
-      }
-      curAngle = theta;
-      if(((frameId%numFramesPerQuat) == 0) && (currentQuatId < int(quats.size()-1))) {
-	currentQuatId++;
-      }
-      {
-	float a = float(frameId%numFramesPerQuat)/numFramesPerQuat;
-	curCubeRotQuaternion =
-	  quats[currentQuatId]*(1-a)+
-	  quats[currentQuatId+1]*a;
-      }
-      if(((frameId%numFramesPerPos) == 0) && (currentPosId < int(positions.size()-1))) {
-	currentPosId++;
-      }
-      {
-	float a = float(frameId%numFramesPerPos)/numFramesPerPos;
-	curCubeTranslation =
-	  positions[currentPosId]*(1-a)+
-	  positions[currentPosId+1]*a;
-      }
-      setupCurrentFrameData();
+        std::lock_guard<std::mutex> guard(objectLock);
+        if (frameId % fps == 0) {
+          if (curMove > -1)
+            Cube::rotate(*c, curSideRotAxis, curSideRotDir);
+          curMove++;
+          curSideRotAxis = moves[curMove].first;
+          curSideRotDir = moves[curMove].second;
+          theta = dtheta;
+        } else {
+          theta += dtheta;
+        }
+        curAngle = theta;
+        if (((frameId % numFramesPerQuat) == 0) &&
+            (currentQuatId < int(quats.size() - 1))) {
+          currentQuatId++;
+        }
+        {
+          float a = float(frameId % numFramesPerQuat) / numFramesPerQuat;
+          curCubeRotQuaternion =
+              quats[currentQuatId] * (1 - a) + quats[currentQuatId + 1] * a;
+        }
+        if (((frameId % numFramesPerPos) == 0) &&
+            (currentPosId < int(positions.size() - 1))) {
+          currentPosId++;
+        }
+        {
+          float a = float(frameId % numFramesPerPos) / numFramesPerPos;
+          curCubeTranslation = positions[currentPosId] * (1 - a) +
+                               positions[currentPosId + 1] * a;
+        }
+        setupCurrentFrameData();
       }
       std::this_thread::sleep_for(std::chrono::milliseconds(sleepTimeMillis));
       frameId++;
     };
   };
-  return new std::thread(f,this);
+  return new std::thread(f, this);
 }
