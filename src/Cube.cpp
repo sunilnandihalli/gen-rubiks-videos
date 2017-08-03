@@ -113,31 +113,16 @@ void Cube::genConfigs() {
       FRONT, TOP, LEFT, BOTTOM, RIGHT, BACK};  //sequence locations of FRONT
   glm::mat4 m(1.0f);
   auto rot = [&m, &ort](uint8_t s, uint8_t d) {
-    std::cout<<"-----------------------------------"<<std::endl;
-    m = glm::rotate(m, -piby2, dir[s]);
     for (int i = 0; i < 6; i++) ort[i] = mp[s][d][ort[i]];
     std::vector<SIDE> cartIdTofaceId({RIGHT,TOP,FRONT});
     std::map<SIDE,int> faceIdTocartId(
-    {{RIGHT,0},{TOP,1},{FRONT,2},{LEFT,3},{BOTTOM,4},{BACK,5}});
+    {{RIGHT,0},{TOP,1},{FRONT,2},
+			 {LEFT,3},{BOTTOM,4},{BACK,5}});
     for (int coordId = 0;coordId<3;coordId++) {
       int mappedCoordId = faceIdTocartId[SIDE(ort[cartIdTofaceId[coordId]])];
       for(int i=0;i<3;i++) m[coordId][i] = 0;
       m[coordId][mappedCoordId%3] = mappedCoordId>2?-1:1;      
     }
-    for(uint8_t i = 0;i<6;i++) 
-      std::cout<<std::setw(7)<<SIDEstr[i];
-    std::cout<<std::endl;
-    for(uint8_t i = 0;i<6;i++) 
-      std::cout<<std::setw(7)<<SIDEstr[ort[i]];
-    std::cout<<std::endl;
-
-    for(int i=0;i<3;i++) {
-      for(int j=0;j<3;j++)
-	std::cout<<std::setw(3)<<(m[i][j]<-0.5?-1:(m[i][j]>0.5)?1:0);
-      std::cout<<std::endl;
-    }
-    std::cout<<glm::to_string(m)<<std::endl;
-    
   };
   const int intmax = 999999999;
   for (int confid = 0, i = 0; i < 6; i++) {
@@ -273,124 +258,8 @@ void Cube::genRenderingData() {
       colorMask = colorMask | (1<<6);
     }
   }
-  for(int i=0;i<0/*26*/;i++) {
-    renderingData[i*3] = rand()%24;
-    std::cout<<int(renderingData[i*3])
-	     <<std::setw(4)<<int(renderingData[i*3+1])
-	     <<std::setw(4)<<int(renderingData[i*3+2])
-	     <<std::setw(10)<<std::bitset<6>(renderingData[i*3+2])<<std::endl;
-    }
 }
 
-void Cube::vertShader(int rotMatId, int transMatId, int pieceId,
-                      glm::mat4& outTrfMat, int& outId) const {
-  cout << " projection      : " << glm::to_string(projection) << endl;
-  cout << " camera          : " << glm::to_string(camera) << endl;
-  cout << " cubeTranslation : " << glm::to_string(cubeTranslation) << endl;
-  cout << " cubeRotation    : " << glm::to_string(cubeRotation) << endl;
-  cout << " rotatingSideTrf : " << glm::to_string(rotatingSideTrf) << endl;
-  cout << " pscale          : " << glm::to_string(pScale) << endl;
-  cout << " transMatId      : " << transMatId << endl;
-  cout << " rotMatId        : " << rotMatId << endl;
-  cout << " pTransMat       : " << glm::to_string(pTransMat[transMatId])
-       << endl;
-  cout << " pRotMat         : " << glm::to_string(pRotMat[rotMatId]) << endl;
-  glm::mat4 trf = projection * camera * cubeTranslation * cubeRotation;
-  if ((pieceId & (1 << 6)) == 1) {
-    trf *= rotatingSideTrf;
-  }
-  outTrfMat = trf * pTransMat[transMatId] * pRotMat[rotMatId] * pScale;
-  outId = pieceId & 63;
-}
-
-void Cube::geomShader(
-    const glm::mat4& trfMat, const int& id,
-    std::vector<std::vector<std::pair<glm::vec4, glm::vec4>>>& out) {
-  cout << "trfMat : " << glm::to_string(trfMat) << endl
-       << " id : " << id << endl;
-  using glm::ivec3;
-  using glm::ivec4;
-  using glm::mat4;
-  using glm::vec3;
-  using glm::vec4;
-  using std::pair;
-  using std::vector;
-  const vec4 black = vec4(0, 0, 0, 1);
-  const vec4 red = vec4(1, 0, 0, 1);
-  const vec4 green = vec4(0, 1, 0, 1);
-  const vec4 blue = vec4(0, 0, 1, 1);
-  const vec4 white = vec4(1, 1, 1, 1);
-  const vec4 orange = vec4(1, 0.65, 0, 1);
-  const vec4 yellow = vec4(1, 1, 0, 1);
-  vec4 scolors[6] = {red, green, blue, white, orange, yellow};
-  vec3 v[8] = {vec3(-1, -1, -1), vec3(-1, -1, 1), vec3(-1, 1, -1),
-               vec3(-1, 1, 1),   vec3(1, -1, -1), vec3(1, -1, 1),
-               vec3(1, 1, -1),   vec3(1, 1, 1)};
-  // all counter clockwise
-  ivec4 f[6] = {ivec4(1, 5, 7, 3), ivec4(3, 7, 6, 2), ivec4(0, 1, 3, 2),
-                ivec4(4, 0, 2, 6), ivec4(0, 4, 5, 1), ivec4(5, 4, 6, 7)};
-  ivec3 t[2] = {ivec3(0, 1, 2), ivec3(0, 2, 3)};
-  for (int i = 0; i < 6; i++) {
-    vec4 color = (1 == (id & (1 << i))) ? scolors[i] : black;
-    for (int triaid = 0; triaid < 2; triaid++) {
-      out.push_back(vector<pair<vec4, vec4>>());
-      for (int j = 0; j < 3; j++) {
-        vec4 gl_Position = trfMat * vec4(v[f[i][t[triaid][j]]], 1.0);
-        out.back().push_back(
-            pair<vec4, vec4>(gl_Position, color));  // EmitVertex();
-      }
-      // EndPrimitive();
-    }
-  }
-}
-glm::mat4 Cube::viewport(int vl, int vb, int vr, int vt) {
-  glm::mat4 ret(0.0f);
-  ret[0][0] = 0.5 * (vr - vl);
-  ret[1][1] = 0.5 * (vt - vb);
-  ret[2][2] = 0.5;
-
-  ret[3][0] = 0.5 * (vr + vl);
-  ret[3][1] = 0.5 * (vt + vb);
-  ret[3][2] = 0.5;
-  ret[3][3] = 1.0;
-  return ret;
-}
-
-void Cube::geomToFragFPP(
-    const std::vector<std::vector<std::pair<glm::vec4, glm::vec4>>>& in,
-    int width, int height,
-    std::vector<std::vector<std::pair<glm::vec4, glm::vec4>>>& out) {
-  using std::abs;
-  glm::mat4 vp = Cube::viewport(0, 0, width, height);
-  cout << "vp : " << glm::to_string(vp) << endl;
-  for (auto tria : in) {
-    out.push_back(std::vector<std::pair<glm::vec4, glm::vec4>>());
-    for (auto point_color : tria) {
-      glm::vec4 tmp = point_color.first;
-      cout << "before clipping division : " << glm::to_string(tmp) << endl;
-      tmp /= tmp[3];
-      cout << "after clipping division : " << glm::to_string(tmp) << endl;
-      if (false ||
-          (abs(tmp[0]) <= 1.0 && abs(tmp[1]) <= 1.0 && abs(tmp[2]) <= 1.0)) {
-        tmp = vp * tmp;
-        out.back().push_back(
-            std::pair<glm::vec4, glm::vec4>(tmp, point_color.second));
-      }
-    }
-  }
-}
-
-void Cube::shaderProgram(
-    int rotMatId, int transMatId, int pieceId,
-    std::vector<std::vector<std::pair<glm::vec4, glm::vec4>>>& out) {
-  glm::mat4 outTrfMat;
-  using std::abs;
-  int outId;
-  vertShader(rotMatId, transMatId, pieceId, outTrfMat, outId);
-  std::vector<std::vector<std::pair<glm::vec4, glm::vec4>>> geomPoints;
-  geomShader(outTrfMat, outId, geomPoints);
-  geomToFragFPP(geomPoints, 100, 100, out);
-}
 
 static int max(int a,int b) {
   if(a>b) return a; else return b;
@@ -400,7 +269,7 @@ std::thread* Cube::animate(int n,int durationSecs,
 		   int minTimeSecsPerTurn,int fps) {
   n=60;
   using glm::vec3;
-  std::vector<glm::vec3> positions({vec3(0,0,0)/*,vec3(0,1,0)*/,vec3(0,0,0)});
+  std::vector<glm::vec3> positions({vec3(0,0,0),vec3(0,1,0),vec3(0,0,0)});
   std::vector<glm::quat> quats({
       glm::angleAxis(float(piby2*2),glm::normalize(vec3(1,1,1))),
 		glm::angleAxis(float(piby2/2),dir[0]),
@@ -416,8 +285,6 @@ std::thread* Cube::animate(int n,int durationSecs,
   int numFrames = n*fps;
   int sleepTimeMillis = (actualTotalDuration*1000)/numFrames;
   for(int i=0;i<n;i++)    {
-    //moves.push_back(std::pair<SIDE,DIR>(SIDE(3),DIR(0)));
-    //moves.push_back(std::pair<SIDE,DIR>(SIDE(0),DIR(1)));
     moves.push_back(std::pair<SIDE,DIR>(SIDE(rand()%6),DIR(rand()%2)));
   }
   auto f = [fps,quats,positions,numFrames,this,moves,sleepTimeMillis](Cube* c) {
@@ -437,11 +304,9 @@ std::thread* Cube::animate(int n,int durationSecs,
     if(frameId%fps == 0) {
       if(curMove>-1) 
 	Cube::rotate(*c,curSideRotAxis,curSideRotDir);
-
         curMove++;
 	curSideRotAxis = moves[curMove].first;
 	curSideRotDir = moves[curMove].second;
-	std::cout<<"curSideRotAxis : "<<curSideRotAxis<<" curSideRotDir : "<<curSideRotDir<<" angle : "<<theta<<std::endl;
 	theta = dtheta;
       } else {
 	theta += dtheta;

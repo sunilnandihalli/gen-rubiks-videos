@@ -99,17 +99,5 @@ class Cube {
   static void init();
   std::thread* animate(int n=10,int durationSecs=20,int minTimeSecsPerTurn=2,int fps=60);
   glm::mat4 viewport(int vl, int vb, int vr, int vt);
-  void vertShader(int rotMatId, int transMatId, int pieceId,
-                  glm::mat4& outTrfMat, int& outId) const;
-  void geomShader(
-      const glm::mat4& trfMat, const int& id,
-      std::vector<std::vector<std::pair<glm::vec4, glm::vec4>>>& out);
-  void geomToFragFPP(
-      const std::vector<std::vector<std::pair<glm::vec4, glm::vec4>>>& in,
-      int width, int height,
-      std::vector<std::vector<std::pair<glm::vec4, glm::vec4>>>& out);
-  void shaderProgram(
-      int rotMatId, int transMatId, int pieceId,
-      std::vector<std::vector<std::pair<glm::vec4, glm::vec4>>>& out);
 };
-#endif  // EXPERIMENTAL_USERS_SUNILSN_EDWARD_RUBIKS_CUBE_H_
+#endif  
