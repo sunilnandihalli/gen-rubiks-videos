@@ -70,7 +70,7 @@ void setup(Cube &c, int width, int height, GLuint &program_id, GLuint &vao,
   setUniformMatrix(program_id, "pTransMat", 26, Cube::pTransMat);
   setUniformMatrix(program_id, "pRotMat", 24, Cube::pRotMat);
 
-  printf("program_id : %02d\n", program_id);
+
   // this should never change after this
 
   RETURN_IF_GL_ERROR(glGenVertexArrays(1, &vao));
@@ -94,7 +94,11 @@ void setVertexAttrib(GLuint program_id, const char *attribName, GLvoid *ptr) {
 
 void render(Cube &c, int width, int height, GLuint program_id, GLuint vao,
             GLuint vbo) {
+
   std::lock_guard<std::mutex> guard(c.objectLock);
+  static int renderid = 0;
+  std::cout<<" render : "<<renderid<<std::endl;
+  renderid++;
   setUniformMatrix(program_id, "camera", c.camera);
   setUniformMatrix(program_id, "projection", c.projection);
   setUniformMatrix(program_id, "cubeTranslation", c.cubeTranslation);
@@ -115,7 +119,7 @@ void render(Cube &c, int width, int height, GLuint program_id, GLuint vao,
   setVertexAttrib(program_id, "transMatId", (void *)(1));
   setVertexAttrib(program_id, "pieceId", (void *)(2));
   RETURN_IF_GL_ERROR(
-      glDrawArrays(GL_POINTS, 0 /*0*/, 26 /*26*/ /*number of verts*/));
+      glDrawArrays(GL_POINTS, 0, 26 /*number of verts*/));
 
   RETURN_IF_GL_ERROR(glBindVertexArray(0));
 

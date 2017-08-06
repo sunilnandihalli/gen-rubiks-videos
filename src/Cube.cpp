@@ -15,6 +15,8 @@ std::map<std::set<uint8_t>, int> Cube::pid;
 using std::cout;
 using std::endl;
 Cube::Cube() {
+  newAnimationDone = false;
+  newRenderingDone = false;
   int cumFieldId = 0;
   for (int i = 0; i < numOneDimPieces; i++, cumFieldId++) {
     pos[cumFieldId] = pieces1[i][0];
@@ -272,14 +274,16 @@ static int max(int a, int b) {
   else
     return b;
 }
-
-std::thread *Cube::animate(int n, int durationSecs, int minTimeSecsPerTurn,
-                           int fps) {
-  n = 60;
+AnimationData* animationSetup(Cube& c,
+			      int numMoves, int numPositions,int numOrts,
+			      int minTimeSecsPerTurn,
+			      int fps) {
+  AnimationData* ret = new AnimationData;
+  ret->c = &c;
   using glm::vec3;
-  std::vector<glm::vec3> positions(
+  ret->positions = std::vector<vec3>(
       {vec3(0, 0, 0), vec3(0, 1, 0), vec3(0, 0, 0)});
-  std::vector<glm::quat> quats(
+  ret->quats = std::vector<glm::quat>(
       {glm::angleAxis(float(piby2 * 2), glm::normalize(vec3(1, 1, 1))),
        glm::angleAxis(float(piby2 / 2), dir[0]),
        glm::angleAxis(float(piby2 / 2), dir[1]),
@@ -288,63 +292,59 @@ std::thread *Cube::animate(int n, int durationSecs, int minTimeSecsPerTurn,
        glm::angleAxis(float(piby2 / 2), dir[4]),
        glm::angleAxis(float(piby2 / 2), dir[5]),
        glm::angleAxis(float(piby2 * 2), glm::normalize(vec3(1, 1, 1)))});
-  std::vector<std::pair<SIDE, DIR>> moves;
-
-  int actualTotalDuration = max(durationSecs, n * minTimeSecsPerTurn);
-  int numFrames = n * fps;
-  int sleepTimeMillis = (actualTotalDuration * 1000) / numFrames;
-  for (int i = 0; i < n; i++) {
-    moves.push_back(std::pair<SIDE, DIR>(SIDE(rand() % 6), DIR(rand() % 2)));
-  }
-  auto f = [fps, quats, positions, numFrames, this, moves,
-            sleepTimeMillis](Cube *c) {
-
-    int currentPosId = -1;
-    int currentQuatId = -1;
-    int curMove = -1;
-    int frameId = 0;
-    float dtheta = piby2 / (fps - 1);
-    float theta = 0.0;
-    int numFramesPerQuat = numFrames / (quats.size() - 1);
-    int numFramesPerPos = numFrames / (positions.size() - 1);
-    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-    while (frameId < numFrames) {
-      {
-        std::lock_guard<std::mutex> guard(objectLock);
-        if (frameId % fps == 0) {
-          if (curMove > -1)
-            Cube::rotate(*c, curSideRotAxis, curSideRotDir);
-          curMove++;
-          curSideRotAxis = moves[curMove].first;
-          curSideRotDir = moves[curMove].second;
-          theta = dtheta;
-        } else {
-          theta += dtheta;
-        }
-        curAngle = theta;
-        if (((frameId % numFramesPerQuat) == 0) &&
-            (currentQuatId < int(quats.size() - 1))) {
-          currentQuatId++;
-        }
-        {
-          float a = float(frameId % numFramesPerQuat) / numFramesPerQuat;
-          curCubeRotQuaternion =
-              quats[currentQuatId] * (1 - a) + quats[currentQuatId + 1] * a;
-        }
-        if (((frameId % numFramesPerPos) == 0) &&
-            (currentPosId < int(positions.size() - 1))) {
-          currentPosId++;
-        }
-        {
-          float a = float(frameId % numFramesPerPos) / numFramesPerPos;
-          curCubeTranslation = positions[currentPosId] * (1 - a) +
-                               positions[currentPosId + 1] * a;
-        }
-        setupCurrentFrameData();
-      }
-      std::this_thread::sleep_for(std::chrono::milliseconds(sleepTimeMillis));
-      frameId++;
-    };
-  };
-  return new std::thread(f, this);
+  for (int i = 0; i < numMoves; i++) 
+    ret->moves.push_back(std::pair<SIDE, DIR>(SIDE(rand() % 6), DIR(rand() % 2)));
+  ret->fps = fps;
+  ret->numFrames = numMoves * minTimeSecsPerTurn * ret->fps;
+  ret->numFramesPerQuat = ret->numFrames/(ret->quats.size()-1);
+  ret->numFramesPerPos = ret->numFrames/(ret->positions.size()-1);
+  ret->numFramesPerMove = ret->numFrames/ret->moves.size();
+  ret->numFrames = max(ret->numFramesPerMove*ret->moves.size()+1,
+		       max(ret->numFramesPerPos*(ret->positions.size()-1)+1,
+			   ret->numFramesPerQuat*(ret->quats.size()-1)+1));
+  ret->frameId = -1;
+  ret->currentPosId = -1;
+  ret->currentQuatId = -1;
+  ret->currentMoveId = -1;
+  ret->dtheta = piby2/(ret->numFramesPerMove-1);
+  ret->theta = 0.0;
 }
+
+bool nextFrame(AnimationData* a) {
+  bool ret=false;
+  if(a->frameId%a->numFramesPerMove == 0 && (a->currentMoveId<int(a->moves.size()))) {
+    if(a->currentMoveId>-1)
+      Cube::rotate(*(a->c),a->c->curSideRotAxis,a->c->curSideRotDir);
+    if(a->currentMoveId<int(a->moves.size()-1)) {
+    a->currentMoveId++;
+    a->c->curSideRotAxis = a->moves[a->currentMoveId].first;
+    a->c->curSideRotDir = a->moves[a->currentMoveId].second;
+    a->theta = a->dtheta;
+    }
+    ret = true;
+  } else if (a->frameId<a->numFrames) {
+    ret = true;
+    a->theta += a->dtheta;
+  }
+  a->c->curAngle = a->theta;
+  a->frameId++;
+  if((a->frameId%a->numFramesPerQuat == 0) && (a->currentQuatId<int(a->quats.size()-1))){
+    a->currentQuatId++;
+    ret = true;
+  }
+  {
+    float r = float(a->frameId% a->numFramesPerQuat)/a->numFramesPerQuat;
+    a->c->curCubeRotQuaternion = a->quats[a->currentQuatId]*(1-r)+a->quats[a->currentQuatId+1]*r;
+  }
+  if((a->frameId%a->numFramesPerPos==0) && (a->currentPosId<int(a->positions.size()-1))) {
+    a->currentPosId++;
+    ret = true;
+  }
+  {
+    float r = float(a->frameId % a->numFramesPerPos) / a->numFramesPerPos;
+    a->c->curCubeTranslation = a->positions[a->currentPosId] * (1 - r) + a->positions[a->currentPosId + 1] * r;
+  }
+  a->c->setupCurrentFrameData();
+  return ret;
+}
+

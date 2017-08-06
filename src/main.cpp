@@ -42,11 +42,12 @@ int main() {
   }
   Cube::init();
   // SETUP
-  c.animate();
+  //  c.animate();
   setup(c, width, height, program_id, vao, vbo);
   int numRenders = 0;
   // render loop
-  while (!glfwWindowShouldClose(window) && numRenders < 10000000) {
+  AnimationData* animData = animationSetup(c);
+  while (!glfwWindowShouldClose(window) && nextFrame(animData)) {
     // input
     // -----
     processInput(window);

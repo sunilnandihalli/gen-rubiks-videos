@@ -3,6 +3,7 @@
 
 in GeomData {
   vec4 color;
+  vec3 normal;
 } gdata;
 out vec4 clr;
 void main(void) {

@@ -27,6 +27,7 @@ in VertexData {
 
 out GeomData {
   vec4 color;
+  vec3 normal;
 } VertexOut;
 
 
