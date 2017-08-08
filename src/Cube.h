@@ -94,7 +94,7 @@ public:
   int pos[totalFields];
   uint8_t renderingData[78];
   void genRenderingData();
-  bool newAnimationDone,newRenderingDone;
+  bool newAnimationDone, newRenderingDone;
   Cube();
   bool operator==(const Cube &c) const;
   static void rotate(Cube &c, SIDE side, DIR dir);
@@ -104,20 +104,17 @@ public:
   glm::mat4 viewport(int vl, int vb, int vr, int vt);
 };
 struct AnimationData {
-  Cube* c;
+  Cube *c;
   std::vector<glm::vec3> positions;
   std::vector<glm::quat> quats;
-  std::vector<std::pair<SIDE,DIR>> moves;
-  int fps,numFrames,sleepTimeMillis;
-  int currentPosId,currentQuatId,currentMoveId,frameId;
-  float dtheta,theta;
-  int numFramesPerQuat,numFramesPerPos,numFramesPerMove;
+  std::vector<std::pair<SIDE, DIR>> moves;
+  int fps, numFrames, sleepTimeMillis;
+  int currentPosId, currentQuatId, currentMoveId, frameId;
+  float dtheta, theta;
+  int numFramesPerQuat, numFramesPerPos, numFramesPerMove;
 };
-AnimationData* animationSetup(Cube& c,
-			      int numMoves=10,
-			      int numPositions=3,
-			      int numOrts=7,
-			      int minTimeSecsPerTurn=2,
-			      int fps=60);
-bool nextFrame(AnimationData* a);
+AnimationData *animationSetup(Cube &c, int numMoves = 10, int numPositions = 3,
+                              int numOrts = 7, int minTimeSecsPerTurn = 2,
+                              int fps = 60);
+bool nextFrame(AnimationData *a);
 #endif

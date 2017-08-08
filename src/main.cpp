@@ -8,7 +8,7 @@
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void processInput(GLFWwindow *window);
-
+void saveFrame(int width,int height,int frameId,const char* prefix);
 int main() {
   Cube::init();
   Cube c;
@@ -46,15 +46,11 @@ int main() {
   setup(c, width, height, program_id, vao, vbo);
   int numRenders = 0;
   // render loop
-  AnimationData* animData = animationSetup(c);
+  AnimationData *animData = animationSetup(c);
   while (!glfwWindowShouldClose(window) && nextFrame(animData)) {
-    // input
-    // -----
     processInput(window);
-
-    // render
-    // ------
     render(c, width, height, program_id, vao, vbo);
+    saveFrame(width,height,numRenders,"runs/01/");
     numRenders += 1;
     glfwSwapBuffers(window);
     glfwPollEvents();
@@ -87,4 +83,29 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
   // and
   // height will be significantly larger than specified on retina displays.
   glViewport(0, 0, width, height);
+}
+#include <netpbm/pam.h>
+void saveFrame(int width,int height,int frameId,const char* prefix) {
+  struct pam inpam, outpam;
+  tuple * tuplerow;
+  unsigned int row;
+  pm_init(argv[0], 0);
+  pnm_readpaminit(stdin, &inpam, PAM_STRUCT_SIZE(tuple_type));
+  outpam = inpam; outpam.file = stdout;
+  pnm_writepaminit(&outpam);
+  tuplerow = pnm_allocpamrow(&inpam);
+
+  for (row = 0; row < inpam.height; ++row) {
+    unsigned int column;
+    pnm_readpamrow(&inpam, tuplerow);
+    for (column = 0; column < inpam.width; ++column) {
+      unsigned int plane;
+      for (plane = 0; plane < inpam.depth; ++plane) {
+	grand_total += tuplerow[column][plane];
+      }
+    }
+    pnm_writepamrow(&outpam, tuplerow);
+  }
+  pnm_freepamrow(tuplerow);
+  
 }

@@ -274,15 +274,13 @@ static int max(int a, int b) {
   else
     return b;
 }
-AnimationData* animationSetup(Cube& c,
-			      int numMoves, int numPositions,int numOrts,
-			      int minTimeSecsPerTurn,
-			      int fps) {
-  AnimationData* ret = new AnimationData;
+AnimationData *animationSetup(Cube &c, int numMoves, int numPositions,
+                              int numOrts, int minTimeSecsPerTurn, int fps) {
+  AnimationData *ret = new AnimationData;
   ret->c = &c;
   using glm::vec3;
-  ret->positions = std::vector<vec3>(
-      {vec3(0, 0, 0), vec3(0, 1, 0), vec3(0, 0, 0)});
+  ret->positions =
+      std::vector<vec3>({vec3(0, 0, 0), vec3(0, 1, 0), vec3(0, 0, 0)});
   ret->quats = std::vector<glm::quat>(
       {glm::angleAxis(float(piby2 * 2), glm::normalize(vec3(1, 1, 1))),
        glm::angleAxis(float(piby2 / 2), dir[0]),
@@ -292,59 +290,65 @@ AnimationData* animationSetup(Cube& c,
        glm::angleAxis(float(piby2 / 2), dir[4]),
        glm::angleAxis(float(piby2 / 2), dir[5]),
        glm::angleAxis(float(piby2 * 2), glm::normalize(vec3(1, 1, 1)))});
-  for (int i = 0; i < numMoves; i++) 
-    ret->moves.push_back(std::pair<SIDE, DIR>(SIDE(rand() % 6), DIR(rand() % 2)));
+  for (int i = 0; i < numMoves; i++)
+    ret->moves.push_back(
+        std::pair<SIDE, DIR>(SIDE(rand() % 6), DIR(rand() % 2)));
   ret->fps = fps;
   ret->numFrames = numMoves * minTimeSecsPerTurn * ret->fps;
-  ret->numFramesPerQuat = ret->numFrames/(ret->quats.size()-1);
-  ret->numFramesPerPos = ret->numFrames/(ret->positions.size()-1);
-  ret->numFramesPerMove = ret->numFrames/ret->moves.size();
-  ret->numFrames = max(ret->numFramesPerMove*ret->moves.size()+1,
-		       max(ret->numFramesPerPos*(ret->positions.size()-1)+1,
-			   ret->numFramesPerQuat*(ret->quats.size()-1)+1));
+  ret->numFramesPerQuat = ret->numFrames / (ret->quats.size() - 1);
+  ret->numFramesPerPos = ret->numFrames / (ret->positions.size() - 1);
+  ret->numFramesPerMove = ret->numFrames / ret->moves.size();
+  ret->numFrames =
+      max(ret->numFramesPerMove * ret->moves.size() + 1,
+          max(ret->numFramesPerPos * (ret->positions.size() - 1) + 1,
+              ret->numFramesPerQuat * (ret->quats.size() - 1) + 1));
   ret->frameId = -1;
   ret->currentPosId = -1;
   ret->currentQuatId = -1;
   ret->currentMoveId = -1;
-  ret->dtheta = piby2/(ret->numFramesPerMove-1);
+  ret->dtheta = piby2 / (ret->numFramesPerMove - 1);
   ret->theta = 0.0;
 }
 
-bool nextFrame(AnimationData* a) {
-  bool ret=false;
-  if(a->frameId%a->numFramesPerMove == 0 && (a->currentMoveId<int(a->moves.size()))) {
-    if(a->currentMoveId>-1)
-      Cube::rotate(*(a->c),a->c->curSideRotAxis,a->c->curSideRotDir);
-    if(a->currentMoveId<int(a->moves.size()-1)) {
-    a->currentMoveId++;
-    a->c->curSideRotAxis = a->moves[a->currentMoveId].first;
-    a->c->curSideRotDir = a->moves[a->currentMoveId].second;
-    a->theta = a->dtheta;
+bool nextFrame(AnimationData *a) {
+  bool ret = false;
+  if (a->frameId % a->numFramesPerMove == 0 &&
+      (a->currentMoveId < int(a->moves.size()))) {
+    if (a->currentMoveId > -1)
+      Cube::rotate(*(a->c), a->c->curSideRotAxis, a->c->curSideRotDir);
+    if (a->currentMoveId < int(a->moves.size() - 1)) {
+      a->currentMoveId++;
+      a->c->curSideRotAxis = a->moves[a->currentMoveId].first;
+      a->c->curSideRotDir = a->moves[a->currentMoveId].second;
+      a->theta = a->dtheta;
     }
     ret = true;
-  } else if (a->frameId<a->numFrames) {
+  } else if (a->frameId < a->numFrames) {
     ret = true;
     a->theta += a->dtheta;
   }
   a->c->curAngle = a->theta;
   a->frameId++;
-  if((a->frameId%a->numFramesPerQuat == 0) && (a->currentQuatId<int(a->quats.size()-1))){
+  if ((a->frameId % a->numFramesPerQuat == 0) &&
+      (a->currentQuatId < int(a->quats.size() - 1))) {
     a->currentQuatId++;
     ret = true;
   }
   {
-    float r = float(a->frameId% a->numFramesPerQuat)/a->numFramesPerQuat;
-    a->c->curCubeRotQuaternion = a->quats[a->currentQuatId]*(1-r)+a->quats[a->currentQuatId+1]*r;
+    float r = float(a->frameId % a->numFramesPerQuat) / a->numFramesPerQuat;
+    a->c->curCubeRotQuaternion = a->quats[a->currentQuatId] * (1 - r) +
+                                 a->quats[a->currentQuatId + 1] * r;
   }
-  if((a->frameId%a->numFramesPerPos==0) && (a->currentPosId<int(a->positions.size()-1))) {
+  if ((a->frameId % a->numFramesPerPos == 0) &&
+      (a->currentPosId < int(a->positions.size() - 1))) {
     a->currentPosId++;
     ret = true;
   }
   {
     float r = float(a->frameId % a->numFramesPerPos) / a->numFramesPerPos;
-    a->c->curCubeTranslation = a->positions[a->currentPosId] * (1 - r) + a->positions[a->currentPosId + 1] * r;
+    a->c->curCubeTranslation = a->positions[a->currentPosId] * (1 - r) +
+                               a->positions[a->currentPosId + 1] * r;
   }
   a->c->setupCurrentFrameData();
   return ret;
 }
-
