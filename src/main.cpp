@@ -1,7 +1,7 @@
 
 #include "ncube_renderer.h"
 #include "rubutils.h"
-
+#include <stdio.h>
 #include "Cube.h"
 #include <GLFW/glfw3.h>
 #include <iostream>
@@ -47,14 +47,26 @@ int main() {
   int numRenders = 0;
   // render loop
   AnimationData *animData = animationSetup(c);
+FILE *avconv = NULL;
+
+/* initialize */
+avconv = popen("avconv -y -f rawvideo -s 800x600 -pix_fmt rgb24 -r 25 -i - -vf vflip -an -b:v 1000k test.mp4", "wb");
+
   while (!glfwWindowShouldClose(window) && nextFrame(animData)) {
     processInput(window);
     render(c, width, height, program_id, vao, vbo);
-    saveFrame(width,height,numRenders,"runs/01/");
+    //  saveFrame(width,height,numRenders,"runs/01/");
+    unsigned char pixels[800*600*3];
+    glReadPixels(0, 0, 800, 600, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+if (avconv)
+  fwrite(pixels ,800*600*3 , 1, avconv);
+
     numRenders += 1;
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
+if (avconv)
+  pclose(avconv);
 
   // optional: de-allocate all resources once they've outlived their purpose:
   // ------------------------------------------------------------------------
@@ -84,28 +96,4 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
   // height will be significantly larger than specified on retina displays.
   glViewport(0, 0, width, height);
 }
-#include <netpbm/pam.h>
-void saveFrame(int width,int height,int frameId,const char* prefix) {
-  struct pam inpam, outpam;
-  tuple * tuplerow;
-  unsigned int row;
-  pm_init(argv[0], 0);
-  pnm_readpaminit(stdin, &inpam, PAM_STRUCT_SIZE(tuple_type));
-  outpam = inpam; outpam.file = stdout;
-  pnm_writepaminit(&outpam);
-  tuplerow = pnm_allocpamrow(&inpam);
 
-  for (row = 0; row < inpam.height; ++row) {
-    unsigned int column;
-    pnm_readpamrow(&inpam, tuplerow);
-    for (column = 0; column < inpam.width; ++column) {
-      unsigned int plane;
-      for (plane = 0; plane < inpam.depth; ++plane) {
-	grand_total += tuplerow[column][plane];
-      }
-    }
-    pnm_writepamrow(&outpam, tuplerow);
-  }
-  pnm_freepamrow(tuplerow);
-  
-}

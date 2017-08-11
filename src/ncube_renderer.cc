@@ -96,7 +96,7 @@ void render(Cube &c, int width, int height, GLuint program_id, GLuint vao,
 
   std::lock_guard<std::mutex> guard(c.objectLock);
   static int renderid = 0;
-  std::cout << " render : " << renderid << std::endl;
+  //std::cout << " render : " << renderid << std::endl;
   renderid++;
   setUniformMatrix(program_id, "camera", c.camera);
   setUniformMatrix(program_id, "projection", c.projection);

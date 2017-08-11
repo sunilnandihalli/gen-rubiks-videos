@@ -308,6 +308,7 @@ AnimationData *animationSetup(Cube &c, int numMoves, int numPositions,
   ret->currentMoveId = -1;
   ret->dtheta = piby2 / (ret->numFramesPerMove - 1);
   ret->theta = 0.0;
+  return ret;
 }
 
 bool nextFrame(AnimationData *a) {
@@ -352,3 +353,5 @@ bool nextFrame(AnimationData *a) {
   a->c->setupCurrentFrameData();
   return ret;
 }
+
+
