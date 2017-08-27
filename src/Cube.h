@@ -32,7 +32,7 @@ const glm::vec3 dir[6] = {glm::vec3(0, 0, 1),  glm::vec3(0, 1, 0),
                           glm::vec3(0, -1, 0), glm::vec3(1, 0, 0)};
 enum DIR { CW, CCW };
 const std::vector<const char *> DIRstr({"CW", "CCW"});
-enum COLOR { RED, WHITE, GREEN, ORANGE, YELLOW, BLUE };
+enum COLOR { RED, GREEN, BLUE, WHITE, ORANGE, YELLOW };
 const uint8_t OrdersCCW[6][4] = {
     {TOP, LEFT, BOTTOM, RIGHT}, {FRONT, RIGHT, BACK, LEFT},
     {BOTTOM, FRONT, TOP, BACK}, {RIGHT, BOTTOM, LEFT, TOP},
@@ -102,6 +102,7 @@ public:
   std::thread *animate(int n = 60, int durationSecs = 20,
                        int minTimeSecsPerTurn = 1, int fps = 60);
   glm::mat4 viewport(int vl, int vb, int vr, int vt);
+  static void shuffle(Cube& c);
 };
 struct AnimationData {
   Cube *c;

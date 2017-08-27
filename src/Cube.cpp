@@ -63,6 +63,8 @@ void Cube::init() {
 }
 
 void Cube::rotate(Cube &c, SIDE s, DIR d) {
+  if(s==INVALIDSIDE)
+    return;
   int cumFieldId = numOneDimFields;
   for (int i = 0; i < numTwoDimPieces; i++) {
     if (std::set<int>({c.pos[cumFieldId], c.pos[cumFieldId + 1]}).count(s) !=
@@ -194,9 +196,13 @@ void Cube::setupCurrentFrameData() {
   projection = glm::perspective(20.0f, 1.0f, 5.0f, 15.0f);
   cubeTranslation = glm::translate(glm::mat4(1.0f), curCubeTranslation);
   cubeRotation = glm::toMat4(curCubeRotQuaternion);
+  if(curSideRotAxis!=INVALIDSIDE) {
   rotatingSideTrf = glm::rotate(
       glm::mat4(1.0f), float(curAngle * (curSideRotDir == CW ? -1 : 1)),
       dir[curSideRotAxis]);
+  } else {
+    rotatingSideTrf = glm::mat4(1.0f);
+  }
   pScale = glm::scale(glm::mat4(1.0f), glm::vec3(0.5, 0.5, 0.5));
   genRenderingData();
 }
@@ -274,10 +280,12 @@ static int max(int a, int b) {
   else
     return b;
 }
+
 AnimationData *animationSetup(Cube &c, int numMoves, int numPositions,
                               int numOrts, int minTimeSecsPerTurn, int fps) {
   AnimationData *ret = new AnimationData;
   ret->c = &c;
+  Cube::shuffle(c);
   using glm::vec3;
   ret->positions =
       std::vector<vec3>({vec3(0, 0, 0), vec3(0, 1, 0), vec3(0, 0, 0)});
@@ -292,9 +300,9 @@ AnimationData *animationSetup(Cube &c, int numMoves, int numPositions,
        glm::angleAxis(float(piby2 * 2), glm::normalize(vec3(1, 1, 1)))});
   for (int i = 0; i < numMoves; i++)
     ret->moves.push_back(
-        std::pair<SIDE, DIR>(SIDE(rand() % 6), DIR(rand() % 2)));
+			 std::pair<SIDE, DIR>(SIDE(6/*rand() % 6*/), DIR(rand() % 2)));
   ret->fps = fps;
-  ret->numFrames = numMoves * minTimeSecsPerTurn * ret->fps;
+  ret->numFrames = max(numMoves * minTimeSecsPerTurn * ret->fps,1000);
   ret->numFramesPerQuat = ret->numFrames / (ret->quats.size() - 1);
   ret->numFramesPerPos = ret->numFrames / (ret->positions.size() - 1);
   ret->numFramesPerMove = ret->numFrames / ret->moves.size();
@@ -355,3 +363,8 @@ bool nextFrame(AnimationData *a) {
 }
 
 
+void Cube::shuffle(Cube& c) {
+  int numMoves = 30;
+  for(int i=0;i<numMoves;i++) 
+    Cube::rotate(c,SIDE(rand()%6),DIR(rand()%2));
+}

@@ -50,9 +50,10 @@ int main() {
 FILE *avconv = NULL;
 
 /* initialize */
-avconv = popen("avconv -y -f rawvideo -s 800x600 -pix_fmt rgb24 -r 25 -i - -vf vflip -an -b:v 1000k test.mp4", "wb");
-
-  while (!glfwWindowShouldClose(window) && nextFrame(animData)) {
+avconv = popen("avconv -y -f rawvideo -s 800x600 -pix_fmt rgb24 -r 25 -i - -vf vflip -an -b:v 1000k test.mp4", "w");
+ if(!avconv)
+   std::cout<<" popen unsuccessful"<<std::endl;
+  while (!glfwWindowShouldClose(window) && nextFrame(animData) && avconv) {
     processInput(window);
     render(c, width, height, program_id, vao, vbo);
     //  saveFrame(width,height,numRenders,"runs/01/");
@@ -60,7 +61,8 @@ avconv = popen("avconv -y -f rawvideo -s 800x600 -pix_fmt rgb24 -r 25 -i - -vf v
     glReadPixels(0, 0, 800, 600, GL_RGB, GL_UNSIGNED_BYTE, pixels);
 if (avconv)
   fwrite(pixels ,800*600*3 , 1, avconv);
-
+ else
+   std::cout<<" didn't write frame "<<std::endl;
     numRenders += 1;
     glfwSwapBuffers(window);
     glfwPollEvents();

@@ -117,7 +117,7 @@ void render(Cube &c, int width, int height, GLuint program_id, GLuint vao,
   setVertexAttrib(program_id, "rotMatId", (void *)(0));
   setVertexAttrib(program_id, "transMatId", (void *)(1));
   setVertexAttrib(program_id, "pieceId", (void *)(2));
-  RETURN_IF_GL_ERROR(glDrawArrays(GL_POINTS, 0, 26 /*number of verts*/));
+  RETURN_IF_GL_ERROR(glDrawArrays(GL_POINTS, 0, 1 /*26*/ /*number of verts*/));
 
   RETURN_IF_GL_ERROR(glBindVertexArray(0));
 
